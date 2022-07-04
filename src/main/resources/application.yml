@@ -1,0 +1,39 @@
+spring:
+  #数据源
+  datasource:
+    url: jdbc:mysql://localhost:3306/fupin?useUnicode=true&characterEncoding=UTF-8
+    username: fupin
+    password: 123456
+    driver-class-name: com.mysql.jdbc.Driver
+  #webapp
+#  mvc:
+#    view:
+#      prefix: /static/
+#      suffix: .html
+#    static-path-pattern: /static/**
+#  resources:
+#    static-locations: -classpath:/static/
+server:
+  port: 9090
+  #设置热部署
+  #开启热部署
+  #spring.devtools.restart.enabled=true
+  #重启范围
+  #spring.devtools.restart.additional-paths=src/main/java
+
+#mybatis配置
+mybatis:
+  typeAliasesPackage: com.tian.dao
+  mapperLocations: classpath:mapper/*.xml
+  #configLocation: classpath:/mybatis-config.xml
+#logging:
+#  level:
+#    com.tian.mapper: debug
+
+logging:
+  level:
+    com:
+      tian: info
+    org:
+      springframework:
+        web: info
