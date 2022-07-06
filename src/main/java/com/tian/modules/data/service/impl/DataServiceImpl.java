@@ -129,4 +129,74 @@ public class DataServiceImpl implements IDataService {
         });
     }
 
+    private String [] createTable(){
+
+        Dialect dialect = null;
+        if (DictEnum.MODEL_DATASOURCE_TYPE_TBDS.getCode().equals(tableDTO.getDbType())) {
+            //已有其他实现
+            dialect = Dialect.TBDS;
+        } else if (DictEnum.MODEL_DATASOURCE_TYPE_MYSQL.getCode().equals(tableDTO.getDbType())) {
+            dialect = Dialect.MySQL;
+        } else if (DictEnum.MODEL_DATASOURCE_TYPE_TBASE.getCode().equals(tableDTO.getDbType())) {
+            dialect = Dialect.PostgreSQL;
+        } else if (DictEnum.MODEL_DATASOURCE_TYPE_ORACLE.getCode().equals(tableDTO.getDbType())) {
+            dialect = Dialect.Oracle;
+        } else if (DictEnum.MODEL_DATASOURCE_TYPE_POSTGREPSQL.getCode().equals(tableDTO.getDbType())) {
+            dialect = Dialect.PostgreSQL;
+        }
+
+        TableModel tableModel = new TableModel();
+        List<Column> columns = new ArrayList();
+        List<ColumnDTO> columnDtoList = tableDTO.getColumns();
+
+        //设置字段信息
+        if (columnDtoList != null) {
+            for (ColumnDTO cdto : columnDtoList) {
+                Column column = new Column();
+                column.setColumnName(cdto.getFieldName());
+                column.setComment(cdto.getFieldComment());
+                if (StringUtils.isNotEmpty(cdto.getNullable()) && "0".equals(cdto.getNullable())) {
+                    column.setNullable(false);
+                }
+                if (StringUtils.isNotEmpty(cdto.getDefaultValue())) {
+                    column.setDefaultValue(SqlGetDefaultValue.getValue(tableDTO.getDbType(), cdto.getDefaultValue()));
+                }
+                //转换字段类型
+                column.setColumnType(JdbcUtil.translaFeildType(tableDTO.getDbType(), cdto.getFieldType()));
+
+                if (StringUtils.isNotEmpty(cdto.getFieldLength())) {
+                    Integer[] x = new Integer[2];
+                    x[0] = Integer.valueOf(cdto.getFieldLength());
+                    if (cdto.getScale() != null) {
+                        x[1] = cdto.getScale();
+                    } else {
+                        x[1] = 0;
+                    }
+                    column.setLengths(x);
+                }
+                //若mysql的datatime没有设置长度，则默认设置长度为0
+                boolean bf = Dialect.MySQL == dialect && "datetime".contains(cdto.getFieldType().toLowerCase());
+                if (bf) {
+                    column.setLengths(new Integer[]{0, 0});
+                }
+
+                if ("1".equals(cdto.getPkey())) {
+                    column.setPkey(true);
+                }
+                columns.add(column);
+            }
+        }
+        //设置表信息
+        tableModel.setTableName(tableDTO.getTableName());
+        tableModel.setColumns(columns);
+        tableModel.setComment(tableDTO.getComment());
+
+        if (dialect == null) {
+            return null;
+        }
+        String[] sql = DDLCreateUtils.toCreateDDL(dialect, tableModel);
+        //String sql2 = SqlUtils.formatSql(sql[0], tableDTO.getDbType());
+        return sql;
+    }
+
 }
